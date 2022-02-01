@@ -109,13 +109,13 @@ or PowerPC 603) delivers and does NOT depend on the type of host computer.
  * @return endianness  - String indicating resulting endian.
  */
 export function setEndianFromValue(buffer: IOBuffer): Endian {
-  buffer.setLittleEndian();/*is the default but in case user has changed it */
+  buffer.setLittleEndian(); /*is the default but in case user has changed it */
 
   /* buffer.mark() could be confusing. Just use the current offset. */
   const initialOffset = buffer.offset;
-  const bits = 32 * 3 
+  const bits = 32 * 3;
   /* Get to eBytes */
-  buffer.offset = bits/8
+  buffer.offset = bits / 8;
 
   /* If read in the wrong way'd be huge. eBytes must exist. */
   const readLE = buffer.readInt32();
@@ -155,7 +155,7 @@ export class AppDetails {
   };
   /* Bits 11-14 */
   /** VnmrJ can read different fid formats, and when you save
-    it probably writes down where it is coming from, if it can detect 
+    it probably writes down where it is coming from, if it can detect
     it */
   public vendorIdStatus: {
     isVar: boolean /** 1 = Varian data*/;
