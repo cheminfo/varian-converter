@@ -154,9 +154,7 @@ export class AppDetails {
     data3DFile: boolean /* for Ft3d */;
   };
   /* Bits 11-14 */
-  /** VnmrJ can read different fid formats, and when you save
-    it probably writes down where it is coming from, if it can detect
-    it */
+  /** probably different spectrometers that VnmrJ can control */
   public vendorIdStatus: {
     isVar: boolean /** 1 = Varian data*/;
     isQOne: boolean /** 1 = Q-One data*/;
@@ -188,5 +186,33 @@ export class AppDetails {
       ipFileId: (code & 0x07c0) !== 0,
       ipVendorId: (code & 0x7800) !== 0,
     };
+  }
+}
+
+interface LinesOpts { eol:string, offset:number }
+/** Utility to read read a line without need of 
+ * keeping track of the offset 
+ * @param buffer - the file as a buffer
+ * @param [options] - As an object, default is `{eol:'\n', offset:0}`
+ */
+export class Lines{
+  /** Array of lines splitted at the End Of Line, default is `'\n'` */
+  public lines: string[];
+  /** Number of lines */
+  public length: number;
+  /** Initial offset where you'll start reading lines. Default is 0 */
+  public offset: number;
+  /** end of line, as a string and not using regex */
+  public eol: string;
+
+  public constructor(buffer:Buffer, options:LinesOpts = {eol:'\n', offset:0}){
+    const {eol,offset} = options;
+    this.eol = eol;
+    this.lines = buffer.toString().split(this.eol)
+    this.offset=offset;
+    this.length=this.lines.length;
+  }
+  readLine():string{
+    return this.lines[this.offset++];
   }
 }
