@@ -189,13 +189,16 @@ export class AppDetails {
   }
 }
 
-interface LinesOpts { eol:string, offset:number }
-/** Utility to read read a line without need of 
- * keeping track of the offset 
+interface LinesOpts {
+  eol: string;
+  offset: number;
+}
+/** Utility to read read a line without need of
+ * keeping track of the offset
  * @param buffer - the file as a buffer
  * @param [options] - As an object, default is `{eol:'\n', offset:0}`
  */
-export class Lines{
+export class Lines {
   /** Array of lines splitted at the End Of Line, default is `'\n'` */
   public lines: string[];
   /** Number of lines */
@@ -205,14 +208,17 @@ export class Lines{
   /** end of line, as a string and not using regex */
   public eol: string;
 
-  public constructor(buffer:Buffer, options:LinesOpts = {eol:'\n', offset:0}){
-    const {eol,offset} = options;
+  public constructor(
+    buffer: Buffer,
+    options: LinesOpts = { eol: '\n', offset: 0 },
+  ) {
+    const { eol, offset } = options;
     this.eol = eol;
-    this.lines = buffer.toString().split(this.eol)
-    this.offset=offset;
-    this.length=this.lines.length;
+    this.lines = buffer.toString().split(this.eol);
+    this.offset = offset;
+    this.length = this.lines.length;
   }
-  readLine():string{
+  public readLine(): string {
     return this.lines[this.offset++];
   }
 }
