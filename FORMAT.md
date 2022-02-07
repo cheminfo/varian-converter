@@ -26,27 +26,61 @@ For fid files holding FIDs - and not transformed spectras, the number of block h
   parameters.
 * BlockBody: either Int16, Int32 or Float32 numbers.
 
+The 1D NMR data files have the following structure:          
+```
+filehead  blockhead  blockdata  blockhead  blockdata ...  	
+```								
+
+The 2D NMR data files have the following structure:		
+```
+filehead  blockhead  blockhead2  blockdata ...		
+```								
+
+The 3D NMR data files have the following structure:		
+```
+filehead  blockhead  blockhead2  blockhead2  blockdata ..	
+```								
+								
+All blocks within one file have exactly the same size.       
+								
 The general structure of those headers is different, but they share some properties (example
 [Status class, under utils](./src/utils).)
 
 ## procpar
-It is a text file storing the user input information and some instrument settings. The arrange of
-data is similar to this where both `|` and `---` are added for readability, but are not included in
-the file:
+Text file storing the user input information, instrument settings. The arrange of
+data is similar to:
 ```
-| <name> <subType> <basicType> ...
-| <nOfLines> <values>
-| lines 'children' of prev line
-| optional line
--------End param 1-----------
-| <name> <subType> <basicType> ...
-| <nOfLines> <values>
-| lines 'children' of prev line
+<name> <subType> <basicType> ...
+<nOfLines> <values>
+lines 'children' of prev line
+optional line
+<name> <subType> <basicType> ...
+<nOfLines> <values>
+lines 'children' of prev line
 ```
 
-The first line is pretty much like a header, and tells how to parse the rest (apart from some data
+The first `<name>` line is pretty much like a header, and tells how to parse the rest (apart from some data
 included in the other lines themselves).
 
+### Parameters
+Some useful parameter names. To get the parameters from the array you could filter it by name (if you know the name): `arr.filter(p=> p.name=='apptype')`. It will be stored in the key "name".
+These are a few `name`s, alphabetically:
+
+* **apptype**, example std1D is a standard 1D measurement.
+* **comment**
+* **explist**, from the list of pre-set experiments (PROTON, CARBON...).
+* **emailaddr**
+* **file**
+* **np** number of real datapoints (not imaginary/complex).
+* **operator** (use that did the nmr)
+* **pw**: pulse width. **pw90**: pulse with 90degrees.
+* **sample**, **samplename**.
+* **solvent**
+* **temp**
+* **time\_complete** (also time\_saved, time\_run...)
+* **username**
+See [OpenVnmrJ variables.h](https://github.com/OpenVnmrJ/OpenVnmrJ/blob/master/src/vnmr/variables.h)
+for info on how to parse this file.
 
 ## Reads
 * [Free Induction Decay FID Wiki](https://en.wikipedia.org/wiki/Free_induction_decay).
