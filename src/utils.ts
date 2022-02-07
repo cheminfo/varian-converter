@@ -168,6 +168,7 @@ export class AppDetails {
     ipVendorId: boolean /** preserves vendor ID status*/;
   };
   public constructor(code: number) {
+
     this.softwareVersion = code & (2 ** 6 - 1);
     this.typeOfFile = {
       fidFile: (code & 0x40) !== 0,
@@ -219,6 +220,11 @@ export class Lines {
     this.length = this.lines.length;
   }
   public readLine(): string {
+    if(this.offset>=this.length){
+    /* check offset isn't off the possible offsets */
+    throw new Error(`Last index is ${this.length-1}. Current index ${this.offset}.`)
+    }
+    /* because lines comes from toString() is has to be a string[] */
     return this.lines[this.offset++];
   }
 }
