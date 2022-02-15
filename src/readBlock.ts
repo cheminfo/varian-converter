@@ -4,7 +4,7 @@ import { FileHeader } from './readFileHeader';
 import { BlockStatus } from './utils';
 
 /**
-  Mode of data in block
+ * Mode of data in block
  * Unused bits: `[3, 7, 11, 15]`
  * @param mode flag with mode information
  * @return object storing all flags
@@ -67,7 +67,7 @@ export class Block {
     "nt=1", see Varian NMR News 2001-02-02. */
   public lvl: number; /* level drift correction */
   public tlt: number; /* tilt drift correction */
-  public data: BodyData[];
+  public data: BodyData[] | BodyData;
   public constructor(
     buffer: IOBuffer,
     fileHeader: FileHeader,
@@ -91,10 +91,17 @@ export class Block {
 
 export type BodyData = Float32Array | Int32Array | Int16Array;
 
+/**
+ * Parses the particular block of data  using file header information
+ * @param buffer - IOBuffer with the data.
+ * @param fileHeader - file header information.
+ * @return array of block or single block
+ */
 export function getBlockBody(
   buffer: IOBuffer,
   fileHeader: FileHeader,
-): BodyData[] {
+): BodyData[] | BodyData {
+  /*[[]] if traces >1, [] if traces=1*/
   const {
     np,
     nTraces,
@@ -129,5 +136,7 @@ export function getBlockBody(
       traces[t] = data;
     }
   }
+  /* Simplify output for a single spectra (common case) */
+  if (nTraces === 1) return traces[0];
   return traces;
 }

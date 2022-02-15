@@ -10,7 +10,7 @@ const file = readFileSync(join(__dirname, '../../data/proton.fid/fid'));
 let buffer = new IOBuffer(file);
 
 describe('read the file header', () => {
-  it('cross validate values in the header', () => {
+  it('cross check values in header', () => {
     setEndianFromValue(buffer);
     const fileHeader = new FileHeader(buffer);
     const {

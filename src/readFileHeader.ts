@@ -23,7 +23,6 @@ export class FileHeader {
   public bBytes: number;
   /** VnmrJ version ID
    * If zero may've been exported as 'Varian fid' from != software?
-   * This should be tested to be sure.
    */
   public version: AppDetails;
   /** status of the data */

@@ -1,9 +1,9 @@
 import { IOBuffer } from 'iobuffer';
 
 /**
- * Status of the data stored. Used in block headers and file header.
- * @param status pass the code
- * @return status object with important information about the block data.
+ * Status from code (code is a number, each bit is a flag)
+ * @param status - Status number (flag-like)
+ * @return status flags object
  */
 export class Status {
   /** - 0x1 indicates the presence of data */
@@ -63,7 +63,7 @@ export class BlockStatus extends Status {
  * Parses each bit in the Int16 number.
  * @extends [[`Status`]]
  * @param status - The status code
- * @return status  - Object with important information about the block data.
+ * @return object with file status flags
  */
 export class FileStatus extends Status {
   /** 0x80. 0: Not DDR Acq, 1: DDR Acq */
@@ -96,15 +96,15 @@ export class FileStatus extends Status {
 }
 
 /**
-Big Endian (apparently from Sun systems)
-Little Endian (most other systems)
-*/
-type Endian = 'BE' | 'LE';
+  Big Endian (apparently from Sun systems)
+  Little Endian (most other systems)
+ */
+export type Endian = 'BE' | 'LE';
 
 /** Set the endianness using eBytes property value. Buffer offset is left unchanged.
  * From the VnmrJ user manual:
  * > the byte order in our FIDs is whatever the acquisition CPU (Motorola 68000, 68040,
-or PowerPC 603) delivers and does NOT depend on the type of host computer.
+ or PowerPC 603) delivers and does NOT depend on the type of host computer.
  * @param buffer as iobuffer  i.e `new IOBuffer(buffer)`
  * @return endianness  - String indicating resulting endian.
  */
@@ -168,7 +168,6 @@ export class AppDetails {
     ipVendorId: boolean /** preserves vendor ID status*/;
   };
   public constructor(code: number) {
-
     this.softwareVersion = code & (2 ** 6 - 1);
     this.typeOfFile = {
       fidFile: (code & 0x40) !== 0,
@@ -190,8 +189,14 @@ export class AppDetails {
   }
 }
 
-interface LinesOpts {
+export interface LinesOpts {
+  /** end of line,
+   * @default '\n'
+   */
   eol: string;
+  /** buffer offset,
+    @default 0
+   */
   offset: number;
 }
 /** Utility to read read a line without need of
@@ -219,12 +224,21 @@ export class Lines {
     this.offset = offset;
     this.length = this.lines.length;
   }
+  /* returns line at offset and updates offset +1 */
   public readLine(): string {
-    if(this.offset>=this.length){
-    /* check offset isn't off the possible offsets */
-    throw new Error(`Last index is ${this.length-1}. Current index ${this.offset}.`)
+    if (this.offset >= this.length) {
+      /* check offset isn't off the possible offsets */
+      throw new Error(
+        `Last index is ${this.length - 1}. Current index ${this.offset}.`,
+      );
     }
     /* because lines comes from toString() is has to be a string[] */
     return this.lines[this.offset++];
+  }
+  public readLines(n: number): string[] {
+    /* returns n lines from offset to offset+n-1 */
+    const selectedLines = this.lines.slice(this.offset, this.offset + n);
+    this.offset += n;
+    return selectedLines;
   }
 }

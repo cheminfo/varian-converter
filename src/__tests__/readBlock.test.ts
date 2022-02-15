@@ -14,7 +14,7 @@ let buffer = new IOBuffer(file);
 setEndianFromValue(buffer);
 let fh = new FileHeader(buffer);
 
-test('read one block', () => {
+test('read data block', () => {
   buffer.offset = 32;
   const block = new Block(buffer, fh);
   expect(block).toMatchObject({
@@ -27,5 +27,5 @@ test('read one block', () => {
     index: 1,
     ctCount: 160,
   });
-  expect(block.data[0]).toHaveLength(65536);
+  expect(block.data).toHaveLength(65536);
 });

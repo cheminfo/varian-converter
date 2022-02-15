@@ -10,10 +10,10 @@ import { Lines } from './utils';
 export class Header {
   /** parameter name */
   public name: string;
-  public subType: string;
-  /** 0 undefined, 1 for real, 2 for string 
-  1 and 2 may be arrays 
-  */
+  public subType: number;
+  /** 0 undefined, 1 for real, 2 for string
+    1 and 2 may be arrays
+   */
   public basicType: number;
   /** Maximum value for this current parameter */
   public maxValue: number;
@@ -21,100 +21,106 @@ export class Header {
   public minValue: number;
   /** Step size value for this current parameter */
   public stepSize: number;
-  public gGroup: string;
-  public dGroup: string;
-  public protection: string;
-  public active: string;
-  public intptr: string;
+  public gGroup: number;
+  public dGroup: number;
+  public protection: number;
+  public active: number;
+  public intptr: number;
 
   public constructor(lineIn: string) {
     const line = lineIn.split(' ');
     this.name = line[0];
-    this.subType = line[1];
+    this.subType = parseInt(line[1], 10);
     this.basicType = parseInt(line[2], 10);
-    this.maxValue = parseInt(line[3], 10);
-    this.minValue = parseInt(line[4], 10);
-    this.stepSize = parseInt(line[5], 10);
-    this.gGroup = line[6];
-    this.dGroup = line[7];
-    this.protection = line[8];
-    this.active = line[9];
-    this.intptr = line[10];
+    this.maxValue = parseFloat(line[3]);
+    this.minValue = parseFloat(line[4]);
+    this.stepSize = parseFloat(line[5]);
+    this.gGroup = parseInt(line[6], 10);
+    this.dGroup = parseInt(line[7], 10);
+    this.protection = parseInt(line[8], 10);
+    this.active = parseInt(line[9], 10);
+    this.intptr = parseInt(line[10], 10);
   }
 }
 
-/** Parameter Class represents a parameter
- * Parameters are either user input (i.e sample description)
- * or intrument settings.
- * The structure of a single parameter, is something like this:
- ```
- Header
- NOL num(1)|str(2)
- <thirLine is optional>
- ```
- * If basicType is 2 and NOL (NOfLines) > 1 then string is multiline.
- * @param lines - All the lines as a [[`Lines`]] class
- */
-export class Param extends Header {
+/* represents a experiment parameter (a setting that is constant in the exp) in the procpar file */
+export interface Param extends Header {
   /** Values from second Line (but can be multi line) */
-  public values: string[] = [];
+  values: string[] | number[];
   /** Values from 'third' Line */
-  public enumerable: number;
+  enumerable: number;
   /** Optional val from 'third' Line */
-  public enumerables: string[] = [];
+  enumerables: string[];
+}
 
-  public constructor(lines: Lines) {
-    /* 
-       Each parameter has 3 "lines" but the second line 
-       may actually be several lines
-    */
-    super(lines.readLine()); /* pass first line to the Header class */
-    const line2 = lines.readLine();
-    /*  NOL will be updated (let). number of lines */
-    let numOfLines = parseInt(line2.split(' ')[0], 10);
+/** Get parameters from the procpar file
+ * @param buffer - a Buffer instance. You get this using:
+ ```
+ const myBuffer = fs.readFileSync('path/to/propar');
+ const ps = getParameters(myBuffer);
+ ```
+ */
+export function getParameters(buffer: Buffer): Param[] {
+  /*
+     Each parameter is thought as 3 blocks:
+     ```
+     header
+     firstblock
+     secondblock
+     ```
+     header and SB are single lines.
+     FB could be multiple lines.
+   */
+  let params: Param[] = [];
+  let lines = new Lines(buffer); /*split file by lines, store in array*/
 
-     if (this.basicType === 1) { // basicType=0 leaves values=[ ] 
-      /* real num */
-      this.values = line2.split(' ').slice(1); /* leave NOL out */
-    } else if(this.basicType === 2){
-      this.values = line2.split('"').slice(1,2); /* split on "s */
+  while (lines.offset < lines.length - 1) {
+    /* array of vals for current parameter.*/
+    let values: number[] | string[] = [];
 
+    /* enumerables are other values from the last block */
+    let enumerables: string[] = [];
+
+    const header = new Header(lines.readLine()); /* offset is now 1 */
+
+    /* 1st block may be multiline */
+    const line2 = lines.readLine(); /*offset 2*/
+    if (header.basicType === 1) {
+      // basicType=0 leaves values=[ ]
+      /* real num, single line */
+      const valuesRaw = line2.split(' ').slice(1); //0 is numOfLines
+      values = valuesRaw.map((n) => parseFloat(n));
+    } else if (header.basicType === 2) {
+      /* string */
+      values = line2.split('"').slice(1, 2); /* split on "s */
+      let numOfLines = parseInt(line2.split(' ')[0], 10);
       /* strings may have multiple lines */
       while (numOfLines > 1) {
-        this.values.push(lines.readLine().split('"')[1]);
+        values.push(lines.readLine().split('"')[1]);
         numOfLines--;
         /* if line 2 has NOF=3, we read 2 more i.e NOF=3, NOF=2.
            First (line2) was read before */
       }
     }
 
-    const line3 = lines.readLine();
-    /* How many "p1" "p2" "p3" */
-    this.enumerable = parseInt(line3.split(' ')[0], 10);
+    /* second block stores enumerables */
+    const line3 = lines.readLine(); /* last line */
 
-    if (this.enumerable !== 0) { /* if 0, it is [] */
-      if (this.basicType === 1) {
-        // reals
-        this.enumerables = line3.split(' ').slice(1) as string[];
-      } else if (this.basicType === 2) { // strings
-        /* if "", split " has length 3, we retain the data in between '' */
-        this.enumerables = line3
-        .split('"').filter((el,idx) => idx%2===1) as string[];
+    /* How many "p1" "p2" "p3" */
+    const enumerable = parseInt(line3.split(' ')[0], 10);
+
+    if (enumerable !== 0) {
+      /* if 0, it is [] */
+      if (header.basicType === 1) {
+        // real n
+        enumerables = line3.split(' ').slice(1);
+      } else if (header.basicType === 2) {
+        // strings
+        /* if "", split " is [','',']. we retain the data in between '' */
+        enumerables = line3.split('"').filter((el, idx) => idx % 2 === 1);
       }
     }
-  }
-}
-
-/** Get parameters from the procpar file
- * @param buffer - a Buffer object. You get this using:
- * `fs.readFileSync('path/to/propar')`
- */
-export function getParameters(buffer: Buffer): Param[] {
-  let params: Param[] = [];
-  let lines = new Lines(buffer); /*each element a line */
-  while (lines.offset < lines.length - 1) {
-    const param = new Param(lines); /* updates the lines offset */
-    params.push(param);
+    params.push({ ...header, values, enumerable, enumerables });
   }
   return params;
 }
